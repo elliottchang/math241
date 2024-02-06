@@ -56,6 +56,12 @@ The dataset can be found in the `dsbox` package, and is called `accidents`. It c
 knitr::include_graphics("../img/edi-accidents-1.png")
 ```
 
+```{r}
+weekends <- accidents %>% filter(day_of_week == "Saturday" | day_of_week == "Sunday")
+weekdays <- accidents %>% filter(day_of_week != "Saturday" & day_of_week != "Sunday")
+ggplot(data = weekdays %>% group_by(severity), )
+```
+
 
 ### Problem 2: One Dataset, Visualized ~~25~~ 5 Ways
 
