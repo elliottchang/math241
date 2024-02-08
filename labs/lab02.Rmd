@@ -57,9 +57,17 @@ knitr::include_graphics("../img/edi-accidents-1.png")
 ```
 
 ```{r}
-weekends <- accidents %>% filter(day_of_week == "Saturday" | day_of_week == "Sunday")
-weekdays <- accidents %>% filter(day_of_week != "Saturday" & day_of_week != "Sunday")
-ggplot(data = weekdays %>% group_by(severity), )
+accidents$weekend <- ifelse(accidents$day_of_week %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+ggplot(data = accidents, aes(x = time, fill = severity)) + 
+  scale_fill_manual(values = c("purple", "36, 202, 216", "yellow")) +
+  geom_density(alpha = 0.3) + 
+  facet_wrap(~ weekend, ncol = 1) + 
+  labs(title = "Number of accidents throughout the day", 
+       subtitle = "By day of week and severity",
+       x = "Time of day",
+       y = "Density",
+       fill = "Severity") +
+  theme_minimal()
 ```
 
 
@@ -69,13 +77,41 @@ Inspired by Nathan Yau's [One Dataset, Visualized 25 Ways](https://flowingdata.c
 
 a. Pick 3 - 4 variables you want to explore.  Provide their code names here.
 
+```{r}
+head(mpg)
+```
+year, cty, hwy, drv
+
 b. Create 5 graphs.  A few things to consider:
     + Like Nathan's graphs, they don't all have to contain every one of your selected variables.
     + You can't use the same `geom` for all four graphs but you can use the same `geom` more than once.
     + Think carefully about color, the coordinate system, and scales.
     + Feel free to subset or wrangling the dataset if you want to but it isn't required.
 
+```{r}
+ggplot(mpg, aes(x = cty, y= hwy, color = cyl)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+```{r}
+ggplot(mpg, aes(x = trans, y = hwy, fill = trans)) +
+  geom_boxplot()
+```
+
+```{r}
+ggplot(mpg, aes(factor(cyl), fill = factor(year))) +
+  geom_bar()
+```
+
+```{r}
+
+```
+
+
 c. Discuss the pros/cons of your graphs.  What useful information can be gleaned?  How do the different geoms and aesthetics impact the story?
+
+
 
 
 ### Problem 3: Style This Code!
@@ -106,7 +142,22 @@ knitr::include_graphics("../img/538_graph.png")
 
 b. Load the data and recreate the graph as best as you can.  
 
+```{r}
+polls <- read_csv('approval_polllist.csv')
+head(polls)
+```
+
+
 c. Now make the graph better somehow.
+
+```{r}
+ggplot(polls)+
+  geom_point(aes(x = end_date, y = approve_adjusted), color = "palegreen3", alpha = 0.5) +
+  geom_smooth(aes(x = end_date, y = approve_adjusted), color = "springgreen4") +
+  geom_point(aes(x = end_date, y = disapprove_adjusted), color = "plum3", alpha = 0.5) + 
+  geom_smooth(aes(x = end_date, y = disapprove_adjusted), color = "purple")
+```
+
 
 d. Justify why your rendition of this `FiveThirtyEight.com` graph is more effective at telling the data story than the original. 
 
@@ -129,5 +180,11 @@ tuesdata <- tidytuesdayR::tt_load('2022-07-05') # this could take a minute
 
 rent <- tuesdata$rent
 
+```
+
+```{r}
+ggplot(rent %>% filter(room_in_apt	== 0), aes(x = price, fill = as.factor(beds))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~ year)
 ```
 
