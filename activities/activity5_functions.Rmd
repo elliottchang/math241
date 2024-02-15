@@ -40,9 +40,13 @@ Write a function called `count_name` that, when given a name as an argument, ret
 
 ```{r, eval= FALSE}
 data(babynames) # this will explicitly ask R to load the babynames dataset to your environment
-count_name <- function(name){
-  # your code here
+count_name <- function(name.){
+  babynames %>% filter(name == name.) %>% group_by(year) %>% summarise(n = sum(n))
 }
+
+count_name('Mary')
+
+#babynames %>% filter(name == 'Mary')
 ```
 
 
