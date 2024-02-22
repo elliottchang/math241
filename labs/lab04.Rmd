@@ -1,0 +1,110 @@
+---
+title: "Lab 4"
+author: "Elliott Chang"
+date: "Math 241, Week 4"
+output:
+  pdf_document
+urlcolor: blue
+---
+```{r setup, include=FALSE}
+# Do not modify this chunk.
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+# Put all necessary libraries here
+library(tidyverse)
+```
+
+### Problem 1: COVID survey - interpretation
+
+This graph displays survey respondents mean and 80% confidence interval agreement level with statements related to the Covid vaccine. 
+
+One thing that surprises me in this visualization, is that 
+
+### Problem 2: COVID survey - reconstruct
+
+```{r}
+covid_data <- read_csv(file="../data/covid-survey.csv", skip = 1)
+dim(covid_data)
+
+covid_data <- covid_data %>%
+  filter(if_all(c(exp_profession, exp_flu_vax, exp_gender, exp_race, exp_ethnicity, exp_age_bin, exp_already_vax, resp_safety, resp_confidence_science, resp_concern_safety, resp_feel_safe_at_work, resp_will_recommend, resp_trust_info), ~ !is.na(.)))
+dim(covid_data)
+```
+
+```{r}
+covid_data <- covid_data %>%
+  mutate(
+    exp_profession = case_when(
+      exp_profession == 0 ~ "Medical",
+      exp_profession == 1 ~ "Nursing"),
+    exp_already_vax = case_when(
+      exp_already_vax == 0 ~ "No",
+      exp_already_vax == 1 ~ "Yes"),
+    exp_flu_vax = case_when(
+      exp_flu_vax == 0 ~ "No",
+      exp_flu_vax == 1 ~ "Yes"),
+    exp_gender = case_when(
+      exp_gender == 0 ~ "Male",
+      exp_gender == 1 ~ "Female",
+      exp_gender == 3 ~ "Non-binary third gender",
+      exp_gender == 4 ~ "Prefer not to say"),
+    exp_race = case_when(
+      exp_race == 1 ~ "American Indian/Native Alaskan",
+      exp_race == 2 ~ "Asian",
+      exp_race == 3 ~ "Black/African American",
+      exp_race == 4 ~ "Native Hawaiian/Other Pacific Islander",
+      exp_race == 5 ~ "White"),
+    exp_ethnicity = case_when(
+      exp_ethnicity == 1 ~ "Hispanic/Latino",
+      exp_ethnicity == 2 ~ "Non-Hispanic/Non-Latino"),
+    exp_age_bin = case_when(
+      exp_age_bin == 0 ~ "<20",
+      exp_age_bin == 20 ~ "21-25",
+      exp_age_bin == 25 ~ "25-30",
+      exp_age_bin == 30 ~ ">30")
+    )
+    
+```
+
+```{r}
+covid_longer <- covid_data %>%
+  pivot_longer(
+    cols = starts_with("exp_"),
+    names_to = "explanatory",
+    values_to = "explanatory_value"
+  ) %>%
+  filter(!is.na(explanatory_value)) %>%
+    pivot_longer(
+    cols = starts_with("resp_"),
+    names_to = "response",
+    values_to = "response_value"
+)
+covid_longer
+```
+
+
+```{r}
+covid_survey_summary_stats_by_group <- covid_longer %>% group_by(explanatory, explanatory_value, response) %>% summarize(mean = mean(response_value), low = quantile(response_value, 0.1), high = quantile(response_value, 0.9))
+```
+
+```{r}
+covid_survey_summary_stats_all <- covid_longer %>% group_by(response) %>% summarize(mean = mean(response_value), low = quantile(response_value, 0.1), high = quantile(response_value, 0.9), explanatory = "ALL", explanatory_value = "")
+```
+
+```{r}
+covid_survey_summary_stats <- rbind(covid_survey_summary_stats_all, covid_survey_summary_stats_by_group)
+```
+
+
+```{r}
+ggplot(covid_survey_summary_stats, aes(x = mean, xmin = low, xmax = high, y = explanatory_value)) +
+  facet_grid(explanatory ~ response, scales = "free", space = "free_y", 
+             labeller = labeller(explanatory = c("ALL" = "All", "exp_age_bin" = "Age", "exp_gender" = "Gender", "exp_race" = "Race", "exp_ethnicity" = "Ethnicity", "exp_profession" = "Profession", "exp_already_vax" = "Had COVID vaccine", "exp_flu_vax" = "Had flu vaccine this year"), response = c("resp_safety" = "Based on my understanding, I believe the vaccine is safe", "resp_confidence_science" = "I am confident in the scientific vetting process for the new COVID vaccines", "resp_feel_safe_at_work" = "Getting the vaccine will make me feel safer at work", "resp_will_recommend" = "I will recommend the vaccine to family, friends, and community members", "resp_trust_info" = "I trust the information that I have received about the vaccines", "resp_concern_safety" = "I am concerned about the safety and side effects of the vaccine"))) +
+  geom_pointrange() +
+  geom_errorbarh() + 
+  theme_minimal() +
+  labs(x = "Mean Likert Score", y = "")
+```
+
